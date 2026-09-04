@@ -1,0 +1,30 @@
+# --- Core (grading pipeline runs with just these) ---
+numpy>=1.26
+pandas>=2.2
+opencv-python-headless>=4.9
+pytesseract>=0.3.10
+pdf2image>=1.17
+pypdf>=4.0
+python-docx>=1.1
+openpyxl>=3.1
+reportlab>=4.1
+scikit-learn>=1.4
+Pillow>=10.2
+
+# --- Multilingual semantic grading (recommended for production; the
+#     pipeline falls back to a TF-IDF backend automatically if these
+#     are not installed, with a logged warning) ---
+sentence-transformers>=3.0
+torch>=2.2
+
+# --- RTL PDF rendering (Persian/Arabic/Urdu) ---
+arabic-reshaper>=3.0
+python-bidi>=0.4
+
+# --- Desktop UI (phase 2 — see src/ui/README.md) ---
+PySide6>=6.6
+
+# --- System dependency (not pip-installable): Tesseract OCR + language
+#     packs, and poppler-utils (for pdf2image). On Ubuntu/Debian:
+#     apt-get install tesseract-ocr tesseract-ocr-fas tesseract-ocr-ara \
+#                      tesseract-ocr-chi-sim poppler-utils

@@ -1,0 +1,13 @@
+Exam: Introduction to Biology - Midterm
+
+Question 1 (3 points)
+What is photosynthesis? Explain the main inputs and outputs.
+Answer: Photosynthesis is the process by which plants convert light energy into chemical energy. It uses carbon dioxide and water as inputs and produces glucose and oxygen as outputs. It occurs mainly in the chloroplasts.
+
+Question 2 (2 points)
+Define mitosis.
+Answer: Mitosis is the process of cell division that produces two genetically identical daughter cells from a single parent cell. It is used for growth and tissue repair.
+
+Question 3 [4]
+Describe the structure and function of the cell membrane.
+Answer: The cell membrane is a phospholipid bilayer that surrounds the cell. It controls what enters and exits the cell, providing selective permeability. It also contains proteins that assist in transport and cell signaling.

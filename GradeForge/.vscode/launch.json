@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Exam Grader",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--answer-key",
+                "sample_data/answer_key.txt",
+                "--students-dir",
+                "sample_data/students",
+                "--output-dir",
+                "Results"
+            ]
+        }
+    ]
+}
