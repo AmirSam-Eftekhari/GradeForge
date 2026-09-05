@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 _DEFAULT_MAX_SCORE = 1.0  # used only if no score marker is found; caller is warned
 
 
-def parse_answer_key(raw_text: str, exam_title: str = "Untitled Exam") -> AnswerKey:
+def parse_answer_key(
+    raw_text: str, exam_title: str = "Untitled Exam", default_max_score: float = _DEFAULT_MAX_SCORE,
+) -> AnswerKey:
     blocks = split_into_question_blocks(raw_text)
     questions: list[Question] = []
 
@@ -22,9 +24,9 @@ def parse_answer_key(raw_text: str, exam_title: str = "Untitled Exam") -> Answer
             logger.warning(
                 "No max-score marker found for question %s — defaulting to %.1f. "
                 "Expected formats: '(3 points)', '[5]', '- 2 Marks', 'Score: 4'.",
-                block.number, _DEFAULT_MAX_SCORE,
+                block.number, default_max_score,
             )
-            score = _DEFAULT_MAX_SCORE
+            score = default_max_score
 
         if not answer_text:
             # No explicit "Answer:" marker — assume the whole block IS the

@@ -31,6 +31,7 @@ class AnswerKey:
     exam_title: str
     questions: list[Question]
     language: str = "auto"
+    description: str = ""  # optional teacher-facing note; no effect on grading
 
 
 @dataclass

@@ -3,14 +3,13 @@
 AI-powered semantic grading for descriptive (essay/short-answer) exams —
 multilingual, explainable, and configurable by grading strictness.
 
-> **Where this build stands:** this is the grading *engine* — the part
-> that actually reads answer keys, matches student answers, scores them
-> semantically, explains every deduction, and produces reports — fully
-> working end to end behind a CLI. The PySide6 desktop dashboard from
-> the original spec is the next phase; see [Roadmap](#roadmap) and
-> [`src/ui/README.md`](src/ui/README.md) for why, and for what it will
-> call into once built. Every module below is real, tested code, not a
-> stub — nothing here is a mockup.
+> **Where this build stands:** the grading *engine* — reading answer
+> keys, matching student answers, scoring them semantically, explaining
+> every deduction, and producing reports — is fully working end to end,
+> both behind the original CLI and behind the new PySide6 desktop app,
+> **GradeForge** (`python app.py`). See [`src/ui/README.md`](src/ui/README.md)
+> for the UI-to-engine module mapping and its honestly-scoped limitations.
+> Every module below is real, tested code — nothing here is a mockup.
 
 ## Quick start
 
@@ -19,6 +18,10 @@ pip install -r requirements.txt
 # System deps (Ubuntu/Debian): tesseract-ocr + language packs, poppler-utils
 sudo apt-get install tesseract-ocr tesseract-ocr-fas tesseract-ocr-ara poppler-utils
 
+# Desktop app
+python app.py
+
+# ...or the original CLI
 python main.py \
     --answer-key sample_data/answer_key.txt \
     --students-dir sample_data/students \
@@ -26,9 +29,11 @@ python main.py \
     --output-dir Results
 ```
 
-This grades the bundled sample exam (3 biology questions, 3 students)
-and writes `Results/<Student Name>/{Original Exam, Grade Report.pdf,
-grading.json}` plus `Results/class_report.xlsx`.
+`python main.py ...` grades the bundled sample exam (3 biology
+questions, 3 students) and writes `Results/<Student Name>/{Original
+Exam, Grade Report.pdf, grading.json}` plus `Results/class_report.xlsx`.
+`python app.py` opens the same pipeline as a guided desktop workflow —
+drop the same sample files into New Grading to see it end to end.
 
 ## Why the offline demo's scores look "rough"
 
@@ -62,9 +67,13 @@ src/
                 detection + contradiction heuristic
   grading/      The transparent scoring formula + GradingEngine
   database/     SQLite schema + repository (only file that imports sqlite3)
+                + dto.py (read-side dataclasses for the UI: review state,
+                exam/student summaries)
   reports/      PDF (ReportLab) / Excel (openpyxl) / JSON exporters
   analytics/    Class-wide stats: distribution, question difficulty, pass rate
-  ui/           Reserved for the PySide6 dashboard (phase 2)
+  services/     UI-facing service layer: QThread grading/import workers,
+                settings persistence, report-export path resolution
+  ui/           PySide6 desktop app (GradeForge) — see src/ui/README.md
   utils/        Logging, etc.
 tests/          Unit tests for the scoring policy (the part that most
                 needs to be auditable)
@@ -111,7 +120,6 @@ spec (`StudentIdentity.status`).
 
 ## What's NOT built yet (by design — see Roadmap)
 
-- PySide6 desktop UI / dark-mode dashboard with charts
 - Handwriting-specialized OCR (Tesseract handles printed text well;
   handwriting needs a dedicated model — e.g. TrOCR — swapped in behind
   the same `OCREngine` interface)
@@ -119,12 +127,14 @@ spec (`StudentIdentity.status`).
 - Cloud sync, LMS integration, plagiarism detection (all future-phase
   items in the original spec, and all designed for as extension points,
   not implemented)
+- A few smaller GradeForge desktop-app gaps are listed honestly in
+  [`src/ui/README.md`](src/ui/README.md#known-limitations-honest-not-hidden)
 
 ## Roadmap
 
 1. ~~Core grading engine, OCR, parsing, reports, analytics, DB~~ — **done**
-2. PySide6 dashboard (dark theme, charts, live batch-grading log) calling
-   the exact same `GradingEngine`/`ExamRepository` used by `main.py`
+2. ~~PySide6 dashboard (dark theme, charts, live batch-grading log) calling
+   the exact same `GradingEngine`/`ExamRepository` used by `main.py`~~ — **done**
 3. Swap in a real handwriting OCR model behind `OCREngine`
 4. Teacher-defined rubrics feeding `Question.rubric_concepts` instead of
    naive sentence-splitting for concept extraction

@@ -49,3 +49,12 @@ CREATE TABLE IF NOT EXISTS question_feedback (
 
 CREATE INDEX IF NOT EXISTS idx_students_exam ON students(exam_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_student ON question_feedback(student_id);
+
+-- Application settings (GradeForge desktop UI). Kept as a flat key/value
+-- store, mirroring src/config/settings.py's dataclasses, so the Settings
+-- screen doesn't need its own schema migrations every time a new option
+-- is added.
+CREATE TABLE IF NOT EXISTS app_settings (
+    key           TEXT PRIMARY KEY,
+    value         TEXT NOT NULL
+);

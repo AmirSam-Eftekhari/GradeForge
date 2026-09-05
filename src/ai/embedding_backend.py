@@ -17,8 +17,10 @@ one it picked, so nobody is silently graded by a weaker model.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +43,28 @@ class SentenceTransformerBackend(EmbeddingBackend):
 
     Recommended models (per product spec): 'intfloat/multilingual-e5-large'
     or 'BAAI/bge-m3'. Both support 100+ languages without translation.
+
+    `model_name` accepts either a HuggingFace model ID (needs internet on
+    first use; cached by the library afterward) or a local folder path
+    (see download_model.py) -- a local folder is detected automatically
+    and loaded with zero network calls, including the "check for
+    updates" request some hub versions otherwise make even when a model
+    is already cached.
     """
 
     name = "sentence_transformer"
 
     def __init__(self, model_name: str = "intfloat/multilingual-e5-large"):
         from sentence_transformers import SentenceTransformer, util  # deferred import
+
+        local_path = Path(model_name).expanduser()
+        if local_path.exists():
+            # A pre-downloaded model folder -- never touch the network,
+            # not even to check for a newer revision of a cached model.
+            os.environ.setdefault("HF_HUB_OFFLINE", "1")
+            os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+            logger.info("Loading semantic model from local folder (offline): %s", local_path)
+            model_name = str(local_path)
 
         self._model = SentenceTransformer(model_name)
         self._util = util
@@ -108,6 +126,14 @@ class TFIDFBackend(EmbeddingBackend):
         raw = float(cosine_similarity(matrix[0], matrix[1])[0][0])
         calibrated = (raw - self._CALIBRATION_FLOOR) / (self._CALIBRATION_CEILING - self._CALIBRATION_FLOOR)
         return max(0.0, min(1.0, calibrated))
+
+
+def is_sentence_transformer_available() -> bool:
+    """Capability probe used by the UI to show AI/model status without
+    actually importing (and thus loading/downloading) a model."""
+    import importlib.util
+
+    return importlib.util.find_spec("sentence_transformers") is not None and importlib.util.find_spec("torch") is not None
 
 
 def get_backend(preference: str = "auto", model_name: str = "intfloat/multilingual-e5-large") -> EmbeddingBackend:
