@@ -103,6 +103,10 @@ class ExamSetupStep(QWidget):
         self.table.setColumnWidth(_REMOVE_COL, 36)
         self.table.horizontalHeader().setSectionResizeMode(_QUESTION_COL, self.table.horizontalHeader().ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(_ANSWER_COL, self.table.horizontalHeader().ResizeMode.Stretch)
+        self.table.setWordWrap(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.verticalHeader().setDefaultSectionSize(52)
+        self.table.verticalHeader().setMinimumSectionSize(52)
         self.table.itemChanged.connect(self._on_table_edited)
         right.addWidget(self.table, 1)
 
@@ -183,6 +187,7 @@ class ExamSetupStep(QWidget):
         for q in questions:
             self._append_row(q.number, q.text, q.official_answer, q.max_score)
         self.table.blockSignals(False)
+        self.table.resizeRowsToContents()
 
     def _append_row(self, number: str, text: str, answer: str, max_score: float) -> None:
         row = self.table.rowCount()
@@ -203,6 +208,7 @@ class ExamSetupStep(QWidget):
         remove_btn.setFixedWidth(28)
         remove_btn.clicked.connect(lambda: self._remove_row(remove_btn))
         self.table.setCellWidget(row, _REMOVE_COL, remove_btn)
+        self.table.resizeRowToContents(row)
 
     def _remove_row(self, button: QPushButton) -> None:
         for row in range(self.table.rowCount()):
@@ -216,7 +222,9 @@ class ExamSetupStep(QWidget):
         self._append_row(next_num, "", "", self.default_score_input.value())
         self._emit_ready()
 
-    def _on_table_edited(self, _item) -> None:
+    def _on_table_edited(self, item) -> None:
+        if item is not None:
+            self.table.resizeRowToContents(item.row())
         self._emit_ready()
 
     def _emit_ready(self) -> None:
