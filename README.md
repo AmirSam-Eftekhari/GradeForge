@@ -132,7 +132,7 @@ GradeForge/
 │
 ├── sample_data/              # Small sample inputs for local testing
 ├── tests/                    # Automated tests
-├── docs/                     # Project documentation & future proposal
+├── docs/                     # Project documentation & proposal
 ├── requirements.txt
 ├── LICENSE
 └── README.md
