@@ -294,28 +294,6 @@ The project is **functional and usable, but still evolving**.
 
 ---
 
-## Roadmap
-
-### Near term
-
-- Expand automated coverage across OCR, parsing, grading, and reporting
-- Improve handwriting-oriented OCR support
-- Add richer teacher-defined rubrics
-- Improve concept extraction and explanation quality
-- Add CI and coverage reporting
-- Package the desktop application for easier distribution
-
-### Longer term
-
-- More advanced rubric-based assessment
-- Better document/image review tools
-- Optional LMS integrations
-- Optional remote/cloud extensions as separate components
-
-The roadmap is intentionally modular: the local grading core should remain usable independently of future integrations.
-
----
-
 ## Documentation
 
 Project documentation will live under [`docs/`](docs/).
