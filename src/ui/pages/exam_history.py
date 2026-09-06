@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QHBoxLayout, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+    QHBoxLayout, QLineEdit, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from src.ui.app_context import AppContext
-from src.ui.widgets.common import Card, EmptyState, h1, subtitle
+from src.ui.widgets.common import Card, EmptyState, add_leading_icon, clear_layout, h1, icon_button, subtitle
 
 _COLUMNS = ["Exam", "Language", "Strictness", "Students", "Average", "Pass Rate", "Pending Review", "Created"]
 
@@ -24,14 +24,14 @@ class ExamHistoryPage(QWidget):
         title_col.addWidget(subtitle("Every grading session, searchable."))
         header.addLayout(title_col)
         header.addStretch()
-        new_btn = QPushButton("New Grading")
-        new_btn.setProperty("cls", "primary")
+        new_btn = icon_button("New Grading", "plus-circle", cls="primary")
         new_btn.clicked.connect(lambda: self.ctx.navigate("new_grading"))
         header.addWidget(new_btn)
         outer.addLayout(header)
 
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search exams by title…")
+        add_leading_icon(self.search_input, "search")
         self.search_input.textChanged.connect(self._refresh)
         outer.addWidget(self.search_input)
 
@@ -44,10 +44,7 @@ class ExamHistoryPage(QWidget):
         self._refresh()
 
     def _refresh(self) -> None:
-        while self._card.body.count():
-            item = self._card.body.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+        clear_layout(self._card.body)
 
         search = self.search_input.text().strip() or None
         self._exams = self.ctx.repo.list_exams(search=search)
@@ -55,7 +52,7 @@ class ExamHistoryPage(QWidget):
         if not self._exams:
             msg = "No exams match your search." if search else "No exams yet."
             desc = "Try a different search." if search else "Create your first grading session to get started."
-            self._card.body.addWidget(EmptyState(msg, desc))
+            self._card.body.addWidget(EmptyState(msg, desc, icon_name="search" if search else "book-open"))
             return
 
         table = QTableWidget(len(self._exams), len(_COLUMNS))
@@ -64,7 +61,6 @@ class ExamHistoryPage(QWidget):
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         table.setAlternatingRowColors(True)
-        table.horizontalHeader().setStretchLastSection(True)
         for row, e in enumerate(self._exams):
             table.setItem(row, 0, QTableWidgetItem(e.title))
             table.setItem(row, 1, QTableWidgetItem(e.language))
@@ -74,6 +70,8 @@ class ExamHistoryPage(QWidget):
             table.setItem(row, 5, QTableWidgetItem(f"{e.pass_rate_pct:.1f}%"))
             table.setItem(row, 6, QTableWidgetItem(str(e.pending_review_count) if e.pending_review_count else "—"))
             table.setItem(row, 7, QTableWidgetItem(str(e.created_at)[:16]))
+        table.resizeColumnsToContents()
+        table.horizontalHeader().setStretchLastSection(True)
         table.cellDoubleClicked.connect(self._open_exam)
         self._table = table
         self._card.body.addWidget(table)

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QHBoxLayout, QPushButton, QScrollArea, QTableWidget,
+    QHBoxLayout, QScrollArea, QTableWidget,
     QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from src.ui.app_context import AppContext
 from src.ui.theme import palette_for
 from src.ui.widgets.charts import bar_chart
-from src.ui.widgets.common import Card, EmptyState, StatCard, badge, h1, h2, muted, subtitle
+from src.ui.widgets.common import Card, EmptyState, StatCard, badge, h1, h2, icon_button, muted, subtitle
 
 
 class DashboardPage(QWidget):
@@ -26,6 +26,7 @@ class DashboardPage(QWidget):
     def _rebuild(self) -> None:
         if self._content is not None:
             self._outer.removeWidget(self._content)
+            self._content.hide()
             self._content.deleteLater()
 
         scroll = QScrollArea()
@@ -46,15 +47,14 @@ class DashboardPage(QWidget):
         stats = self.ctx.repo.dashboard_stats()
 
         if stats.total_exams == 0:
-            empty_btn = QPushButton("New Grading")
-            empty_btn.setProperty("cls", "primary")
+            empty_btn = icon_button("New Grading", "plus-circle", cls="primary")
             empty_btn.clicked.connect(lambda: self.ctx.navigate("new_grading"))
             empty_card = Card()
             empty_card.setMinimumHeight(320)
             empty_card.body.addWidget(EmptyState(
                 "No exams yet",
                 "Create your first grading session to get started.",
-                action=empty_btn,
+                action=empty_btn, icon_name="sparkles",
             ))
             layout.addWidget(empty_card)
         else:
@@ -77,12 +77,12 @@ class DashboardPage(QWidget):
     def _stats_row(self, stats) -> QHBoxLayout:
         row = QHBoxLayout()
         row.setSpacing(14)
-        row.addWidget(StatCard("Total Exams", str(stats.total_exams)))
-        row.addWidget(StatCard("Students Graded", str(stats.total_students)))
-        row.addWidget(StatCard("Average Score", f"{stats.average_pct:.1f}%"))
-        row.addWidget(StatCard("Pass Rate", f"{stats.pass_rate_pct:.1f}%"))
+        row.addWidget(StatCard("Total Exams", str(stats.total_exams), icon_name="book-open"))
+        row.addWidget(StatCard("Students Graded", str(stats.total_students), icon_name="users"))
+        row.addWidget(StatCard("Average Score", f"{stats.average_pct:.1f}%", icon_name="bar-chart"))
+        row.addWidget(StatCard("Pass Rate", f"{stats.pass_rate_pct:.1f}%", icon_name="award"))
         pending_card = StatCard(
-            "Pending Reviews", str(stats.pending_review_count),
+            "Pending Reviews", str(stats.pending_review_count), icon_name="alert-triangle",
             trend="Needs attention" if stats.pending_review_count else "All clear",
             variant="warning" if stats.pending_review_count else "success",
         )
@@ -106,14 +106,13 @@ class DashboardPage(QWidget):
         card.setFixedWidth(240)
         card.body.addWidget(h2("Quick Actions"))
         actions = [
-            ("New Grading", lambda: self.ctx.navigate("new_grading")),
-            ("Review Results", lambda: self.ctx.navigate("review")),
-            ("Open Reports", lambda: self.ctx.navigate("reports")),
-            ("View Exams", lambda: self.ctx.navigate("exams")),
+            ("New Grading", "plus-circle", lambda: self.ctx.navigate("new_grading")),
+            ("Review Results", "check-circle", lambda: self.ctx.navigate("review")),
+            ("Open Reports", "download", lambda: self.ctx.navigate("reports")),
+            ("View Exams", "book-open", lambda: self.ctx.navigate("exams")),
         ]
-        for label, handler in actions:
-            btn = QPushButton(label)
-            btn.setProperty("cls", "primary" if label == "New Grading" else "ghost")
+        for label, icon_name, handler in actions:
+            btn = icon_button(label, icon_name, cls="primary" if label == "New Grading" else "ghost")
             btn.clicked.connect(handler)
             card.body.addWidget(btn)
         card.body.addStretch()
@@ -128,7 +127,6 @@ class DashboardPage(QWidget):
         table.verticalHeader().setVisible(False)
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        table.horizontalHeader().setStretchLastSection(True)
         table.setAlternatingRowColors(True)
         for row, e in enumerate(exams):
             table.setItem(row, 0, QTableWidgetItem(e.title))
@@ -137,6 +135,8 @@ class DashboardPage(QWidget):
             table.setItem(row, 3, QTableWidgetItem(f"{e.pass_rate_pct:.1f}%"))
             table.setItem(row, 4, QTableWidgetItem(str(e.pending_review_count) if e.pending_review_count else "—"))
             table.setItem(row, 5, QTableWidgetItem(str(e.created_at)[:16]))
+        table.resizeColumnsToContents()
+        table.horizontalHeader().setStretchLastSection(True)
         table.cellDoubleClicked.connect(lambda r, _c: self.ctx.navigate("exam_detail", exam_id=exams[r].id))
         table.setMinimumHeight(min(280, 44 + 34 * max(1, len(exams))))
         card.body.addWidget(table)

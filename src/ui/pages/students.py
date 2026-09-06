@@ -3,7 +3,7 @@ from __future__ import annotations
 from PySide6.QtWidgets import QLineEdit, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from src.ui.app_context import AppContext
-from src.ui.widgets.common import Card, EmptyState, h1, subtitle
+from src.ui.widgets.common import Card, EmptyState, add_leading_icon, clear_layout, h1, subtitle
 
 _COLUMNS = ["Name", "Student ID", "Exams Taken", "Average", "Last Exam", "Last Graded"]
 
@@ -21,6 +21,7 @@ class StudentsPage(QWidget):
 
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search by name or student ID…")
+        add_leading_icon(self.search_input, "search")
         self.search_input.textChanged.connect(self._refresh)
         outer.addWidget(self.search_input)
 
@@ -32,10 +33,7 @@ class StudentsPage(QWidget):
         self._refresh()
 
     def _refresh(self) -> None:
-        while self._card.body.count():
-            item = self._card.body.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+        clear_layout(self._card.body)
 
         search = self.search_input.text().strip().lower()
         all_students = self.ctx.repo.list_all_students()
@@ -47,7 +45,7 @@ class StudentsPage(QWidget):
         if not self._students:
             msg = "No students match your search." if search else "No students yet."
             desc = "Try a different search." if search else "Grade an exam to see students here."
-            self._card.body.addWidget(EmptyState(msg, desc))
+            self._card.body.addWidget(EmptyState(msg, desc, icon_name="search" if search else "users"))
             return
 
         table = QTableWidget(len(self._students), len(_COLUMNS))

@@ -51,6 +51,42 @@ No grading formulas, SQL, or parsing logic live in `src/ui/` — every page
 is a thin layer that calls the service layer above and formats what
 comes back.
 
+## Visual design pass
+
+Icons: `src/ui/icons.py` -- 38 hand-built Lucide-style line icons (SVG path
+data, no bundled asset files, no network fetch), recolored per-theme and
+rendered via QSvgRenderer. Used throughout: sidebar nav, buttons, badges,
+stat cards, empty states, the drop zone.
+
+Notifications: `src/ui/widgets/toast.py` -- floating, auto-dismissing,
+stacked bottom-right, for routine confirmations (report exported) that
+shouldn't interrupt with a modal dialog. QMessageBox is still used for
+destructive-action confirmations (delete exam) and blocking errors.
+
+Elevation: `Card` (`src/ui/widgets/common.py`) has a real drop shadow via
+`QGraphicsDropShadowEffect`, with a hover-lift option for interactive
+cards (stat tiles).
+
+Two real bugs found and fixed during this pass, not just polish:
+- **Icon rendering**: `QSvgRenderer.render(painter)` with no explicit
+  target rect, combined with a pixmap that has `devicePixelRatio() != 1`,
+  double-applies the DPR scale and only a corner of the icon renders.
+  Fixed by always passing an explicit `QRectF(0, 0, size, size)` in
+  logical pixels.
+- **Stale-widget overlap on refresh**: every page's "clear and rebuild"
+  pattern used `layout.takeAt()` / `removeWidget()` + `deleteLater()`.
+  `deleteLater()` defers actual deletion to the next event-loop cycle,
+  but a widget removed from a layout keeps rendering at its last
+  geometry until then -- so a fast refresh (e.g. re-filtering the
+  Review Center) briefly showed old and new content overlapping. Fixed
+  by hiding the widget immediately (`clear_layout()` helper, and an
+  explicit `.hide()` before `.deleteLater()` on the QScrollArea-swap
+  pages).
+- (Also fixed as part of the same pass: the base `QWidget` QSS rule was
+  giving every widget, including plain labels, an explicit background
+  color, which showed as a visible "box" behind word-wrapped text
+  inside cards. Background is now only set on root containers.)
+
 ## Known limitations (honest, not hidden)
 
 - No pause (only cancel) for a running grading batch.

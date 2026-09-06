@@ -3,12 +3,12 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QComboBox, QDoubleSpinBox, QHBoxLayout, QLineEdit, QListWidget, QListWidgetItem,
-    QPushButton, QSplitter, QVBoxLayout, QWidget,
+    QSplitter, QVBoxLayout, QWidget,
 )
 
 from src.database.dto import REASON_LABELS, ReviewItem
 from src.ui.app_context import AppContext
-from src.ui.widgets.common import Card, EmptyState, badge, h1, h2, h3, hline, muted, subtitle
+from src.ui.widgets.common import Card, EmptyState, add_leading_icon, badge, clear_layout, h1, h2, h3, hline, icon_button, muted, subtitle
 
 _REASON_OPTIONS = [("", "All reasons")] + list(REASON_LABELS.items())
 
@@ -34,6 +34,7 @@ class ReviewCenterPage(QWidget):
         filters = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search by student or exam…")
+        add_leading_icon(self.search_input, "search")
         self.search_input.textChanged.connect(self._refresh)
         filters.addWidget(self.search_input, 1)
 
@@ -57,7 +58,7 @@ class ReviewCenterPage(QWidget):
         splitter.addWidget(self.list_widget)
 
         self.detail_card = Card()
-        self.detail_card.body.addWidget(EmptyState("Select an item", "Pick something from the list to review it."))
+        self.detail_card.body.addWidget(EmptyState("Select an item", "Pick something from the list to review it.", icon_name="eye"))
         splitter.addWidget(self.detail_card)
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
@@ -85,15 +86,13 @@ class ReviewCenterPage(QWidget):
             self.detail_card.body.addWidget(EmptyState(
                 "Everything is reviewed" if status == "pending" else "Nothing here",
                 "No answers currently require attention." if status == "pending" else "No items match these filters.",
+                icon_name="check-circle" if status == "pending" else "search",
             ))
         else:
             self.list_widget.setCurrentRow(0)
 
     def _clear_detail(self) -> None:
-        while self.detail_card.body.count():
-            child = self.detail_card.body.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+        clear_layout(self.detail_card.body)
 
     def _show_detail(self, row: int) -> None:
         self._clear_detail()
@@ -140,13 +139,13 @@ class ReviewCenterPage(QWidget):
             if item.review_note:
                 note += f" Note: “{item.review_note}”"
             self.detail_card.body.addWidget(muted(note))
-            open_btn = QPushButton("Open Full Student Result")
+            open_btn = icon_button("Open Full Student Result", "chevron-right")
             open_btn.clicked.connect(lambda: self.ctx.navigate("student_result", exam_id=item.exam_id, student_db_id=item.student_db_id))
             self.detail_card.body.addWidget(open_btn)
             return
 
         actions = QHBoxLayout()
-        accept_btn = QPushButton("Accept AI Grade")
+        accept_btn = icon_button("Accept AI Grade", "check")
         accept_btn.clicked.connect(lambda: self._accept(item))
         actions.addWidget(accept_btn)
 
@@ -159,14 +158,12 @@ class ReviewCenterPage(QWidget):
         note_input.setPlaceholderText("Optional note")
         actions.addWidget(note_input, 1)
 
-        adjust_btn = QPushButton("Save Adjusted Score")
-        adjust_btn.setProperty("cls", "primary")
+        adjust_btn = icon_button("Save Adjusted Score", "save", cls="primary")
         adjust_btn.clicked.connect(lambda: self._adjust(item, score_input.value(), note_input.text().strip()))
         actions.addWidget(adjust_btn)
         self.detail_card.body.addLayout(actions)
 
-        open_btn = QPushButton("Open Full Student Result")
-        open_btn.setProperty("cls", "ghost")
+        open_btn = icon_button("Open Full Student Result", "chevron-right", cls="ghost")
         open_btn.clicked.connect(lambda: self.ctx.navigate("student_result", exam_id=item.exam_id, student_db_id=item.student_db_id))
         self.detail_card.body.addWidget(open_btn)
         self.detail_card.body.addStretch()

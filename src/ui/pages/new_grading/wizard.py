@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QHBoxLayout, QMessageBox, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
+    QHBoxLayout, QMessageBox, QStackedWidget, QVBoxLayout, QWidget,
 )
 
 from src.ui.app_context import AppContext
 from src.ui.pages.new_grading.step_exam_setup import ExamSetupStep
 from src.ui.pages.new_grading.step_settings import GradingSettingsStep
 from src.ui.pages.new_grading.step_students import StudentPapersStep
-from src.ui.widgets.common import h1, muted, subtitle
+from src.ui.icons import icon
+from src.ui.widgets.common import h1, icon_button, muted, subtitle
 
 _STEP_TITLES = ["Exam Setup", "Student Papers", "Grading Settings"]
 
@@ -47,10 +48,9 @@ class NewGradingWizard(QWidget):
             self.stack.addWidget(step)
 
         nav_row = QHBoxLayout()
-        self.back_btn = QPushButton("Back")
+        self.back_btn = icon_button("Back", "arrow-left")
         self.back_btn.clicked.connect(self._go_back)
-        self.next_btn = QPushButton("Next")
-        self.next_btn.setProperty("cls", "primary")
+        self.next_btn = icon_button("Next", "chevron-right", cls="primary")
         self.next_btn.clicked.connect(self._go_next)
         nav_row.addWidget(self.back_btn)
         nav_row.addStretch()
@@ -77,7 +77,8 @@ class NewGradingWizard(QWidget):
             lbl.style().polish(lbl)
         self.back_btn.setEnabled(self._current > 0)
         is_last = self._current == self.stack.count() - 1
-        self.next_btn.setText("Start Grading" if is_last else "Next")
+        self.next_btn.setText("  Start Grading" if is_last else "  Next")
+        self.next_btn.setIcon(icon("zap", "#FFFFFF", 15) if is_last else icon("chevron-right", "#FFFFFF", 15))
 
     def _refresh_next_button(self) -> None:
         if self._current == 0:
@@ -109,6 +110,7 @@ class NewGradingWizard(QWidget):
                 QMessageBox.warning(self, "No student papers", "Add at least one student paper to continue.")
                 return
             self._current += 1
+            self.settings_step.start_prewarm()
         else:
             self._start_grading()
             return

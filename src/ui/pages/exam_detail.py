@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QHBoxLayout, QMessageBox, QPushButton, QScrollArea, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+    QHBoxLayout, QMessageBox, QScrollArea, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from src.analytics.class_analytics import compute_class_analytics
@@ -9,7 +9,7 @@ from src.services.report_service import student_to_grading_result
 from src.ui.app_context import AppContext
 from src.ui.theme import palette_for
 from src.ui.widgets.charts import bar_chart
-from src.ui.widgets.common import Card, EmptyState, StatCard, badge, h1, h2, muted, subtitle
+from src.ui.widgets.common import Card, EmptyState, StatCard, badge, h1, h2, icon_button, muted, subtitle
 
 
 class ExamDetailPage(QWidget):
@@ -29,6 +29,7 @@ class ExamDetailPage(QWidget):
     def _rebuild(self) -> None:
         if self._content is not None:
             self._outer.removeWidget(self._content)
+            self._content.hide()
             self._content.deleteLater()
             self._content = None
 
@@ -36,7 +37,7 @@ class ExamDetailPage(QWidget):
             return
         detail = self.ctx.repo.get_exam_detail(self._exam_id)
         if detail is None:
-            self._content = EmptyState("Exam not found", "It may have been deleted.")
+            self._content = EmptyState("Exam not found", "It may have been deleted.", icon_name="alert-triangle")
             self._outer.addWidget(self._content)
             return
 
@@ -57,16 +58,15 @@ class ExamDetailPage(QWidget):
         header.addLayout(title_col)
         header.addStretch()
 
-        report_btn = QPushButton("Export Reports")
+        report_btn = icon_button("Export Reports", "download")
         report_btn.clicked.connect(lambda: self.ctx.navigate("reports", exam_id=detail.id))
         header.addWidget(report_btn)
 
-        analytics_btn = QPushButton("Full Analytics")
+        analytics_btn = icon_button("Full Analytics", "bar-chart")
         analytics_btn.clicked.connect(lambda: self.ctx.navigate("analytics", exam_id=detail.id))
         header.addWidget(analytics_btn)
 
-        delete_btn = QPushButton("Delete Exam")
-        delete_btn.setProperty("cls", "danger")
+        delete_btn = icon_button("Delete Exam", "trash", cls="danger")
         delete_btn.clicked.connect(self._delete_exam)
         header.addWidget(delete_btn)
         layout.addLayout(header)
@@ -74,7 +74,7 @@ class ExamDetailPage(QWidget):
         if not detail.students:
             empty_card = Card()
             empty_card.setMinimumHeight(240)
-            empty_card.body.addWidget(EmptyState("No students graded yet", "This exam has no graded papers."))
+            empty_card.body.addWidget(EmptyState("No students graded yet", "This exam has no graded papers.", icon_name="users"))
             layout.addWidget(empty_card)
             scroll.setWidget(inner)
             self._outer.addWidget(scroll)
@@ -117,7 +117,6 @@ class ExamDetailPage(QWidget):
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         table.setAlternatingRowColors(True)
-        table.horizontalHeader().setStretchLastSection(True)
         for row, s in enumerate(detail.students):
             table.setItem(row, 0, QTableWidgetItem(s.identity.name or "(unidentified)"))
             table.setItem(row, 1, QTableWidgetItem(s.identity.student_id or "—"))
@@ -126,9 +125,13 @@ class ExamDetailPage(QWidget):
 
             identity_variant = "success" if s.identity.identity_confidence >= 0.6 else "warning"
             identity_text = "Confirmed" if s.identity.identity_confidence >= 0.6 else "Uncertain"
-            table.setCellWidget(row, 4, badge(identity_text, identity_variant))
+            table.setCellWidget(row, 4, badge(identity_text, identity_variant, with_icon=True))
 
-            table.setCellWidget(row, 5, badge("Needs review", "warning") if s.needs_review else badge("OK", "success"))
+            table.setCellWidget(row, 5, badge("Needs review", "warning", with_icon=True) if s.needs_review else badge("OK", "success", with_icon=True))
+        table.resizeColumnsToContents()
+        table.setColumnWidth(4, max(table.columnWidth(4), 130))
+        table.setColumnWidth(5, max(table.columnWidth(5), 130))
+        table.horizontalHeader().setStretchLastSection(True)
         table.cellDoubleClicked.connect(lambda r, _c: self.ctx.navigate(
             "student_result", exam_id=detail.id, student_db_id=detail.students[r].db_id,
         ))

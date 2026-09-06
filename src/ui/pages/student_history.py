@@ -23,6 +23,7 @@ class StudentHistoryPage(QWidget):
     def _rebuild(self) -> None:
         if self._content is not None:
             self._outer.removeWidget(self._content)
+            self._content.hide()
             self._content.deleteLater()
             self._content = None
 
@@ -30,7 +31,7 @@ class StudentHistoryPage(QWidget):
             return
         records = self.ctx.repo.get_student_history(self._key)
         if not records:
-            self._content = EmptyState("No history found", "This student has no graded exams.")
+            self._content = EmptyState("No history found", "This student has no graded exams.", icon_name="clock")
             self._outer.addWidget(self._content)
             return
 

@@ -90,19 +90,19 @@ class GradingSettingsStep(QWidget):
         ai_card = Card()
         ai_card.body.addWidget(h3("Semantic Engine"))
         available = is_sentence_transformer_available()
-        preference = self.ctx.config.embedding.backend
-        model_name = self.ctx.config.embedding.model_name
+        self._preference = self.ctx.config.embedding.backend
+        self._model_name = self.ctx.config.embedding.model_name
 
-        if preference == "tfidf":
-            will_use_transformer = False
-        elif preference == "sentence_transformer":
-            will_use_transformer = True  # will raise at grading time if actually unavailable
+        if self._preference == "tfidf":
+            self._will_use_transformer = False
+        elif self._preference == "sentence_transformer":
+            self._will_use_transformer = True  # will raise at grading time if actually unavailable
         else:  # "auto"
-            will_use_transformer = available
+            self._will_use_transformer = available
 
-        if will_use_transformer:
+        if self._will_use_transformer:
             ai_card.body.addWidget(badge("Ready", "success"))
-            ai_card.body.addWidget(muted(model_name))
+            ai_card.body.addWidget(muted(self._model_name))
         else:
             ai_card.body.addWidget(badge("Offline fallback: TF-IDF", "warning"))
             ai_card.body.addWidget(muted(
@@ -112,11 +112,34 @@ class GradingSettingsStep(QWidget):
             ))
         ai_card.body.addWidget(muted("Change the backend or model in Settings → AI."))
         ai_card.body.addWidget(muted("Fully offline: point Settings → AI → Model at a folder from download_model.py."))
+
+        self.prewarm_status_label = muted("")
+        ai_card.body.addWidget(self.prewarm_status_label)
         right.addWidget(ai_card)
         right.addStretch()
         layout.addLayout(right, 1)
 
+        self._prewarm_worker = None
+        self._prewarm_started = False
         self._update_explanation()
+
+    def start_prewarm(self) -> None:
+        """Called by the wizard when this step becomes visible. Loads the
+        model into src.services.backend_cache in the background, so by
+        the time "Start Grading" is clicked it's often already warm --
+        this is what actually fixes the "grading is slow every time it
+        starts" complaint (the model used to reload from scratch on
+        every run)."""
+        if self._prewarm_started or not self._will_use_transformer:
+            return
+        self._prewarm_started = True
+        from src.services.grading_service import BackendPrewarmWorker
+
+        self.prewarm_status_label.setText("Warming up the semantic model in the background…")
+        self._prewarm_worker = BackendPrewarmWorker(self._preference, self._model_name)
+        self._prewarm_worker.ready.connect(lambda name: self.prewarm_status_label.setText(f"{name} is warmed up and ready."))
+        self._prewarm_worker.failed.connect(lambda msg: self.prewarm_status_label.setText(f"Background warm-up failed (will retry when grading starts): {msg}"))
+        self._prewarm_worker.start()
 
     def _update_explanation(self) -> None:
         level = self.selected_level()

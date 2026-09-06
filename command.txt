@@ -1,1 +1,0 @@
-C:\Users\NoteBook\Desktop\Projects\Exam scorer\exam_grader>python main.py --answer-key sample_data\answer_key.txt --students-dir sample_data\students --output-dir Results

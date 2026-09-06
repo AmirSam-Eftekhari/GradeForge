@@ -16,7 +16,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QThread, Signal
 
-from src.ai.embedding_backend import EmbeddingBackend, get_backend
+from src.ai.embedding_backend import EmbeddingBackend
 from src.config.strictness import StrictnessPolicy
 from src.grading.engine import GradingEngine
 from src.models.domain import AnswerKey, GradingResult, StudentPaper
@@ -24,6 +24,7 @@ from src.ocr.tesseract_engine import TesseractOCREngine
 from src.parser.answer_key_parser import parse_answer_key
 from src.parser.document_reader import ExtractedDocument, read_document
 from src.parser.student_paper_parser import parse_student_paper
+from src.services.backend_cache import get_cached_backend
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,28 @@ class StudentImportWorker(QThread):
         self.all_done.emit()
 
 
+class BackendPrewarmWorker(QThread):
+    """Fired when the New Grading wizard reaches the Grading Settings
+    step -- loads the embedding backend into the cache in the background
+    while the teacher is still reading strictness options, so by the
+    time they click "Start Grading" the model is often already warm."""
+
+    ready = Signal(str)  # backend name
+    failed = Signal(str)
+
+    def __init__(self, preference: str, model_name: str, parent=None):
+        super().__init__(parent)
+        self._preference = preference
+        self._model_name = model_name
+
+    def run(self) -> None:
+        try:
+            backend = get_cached_backend(preference=self._preference, model_name=self._model_name)
+            self.ready.emit(backend.name)
+        except Exception as exc:  # noqa: BLE001 -- prewarm is best-effort
+            self.failed.emit(human_error(exc))
+
+
 @dataclass
 class GradingProgress:
     current_index: int
@@ -167,7 +190,7 @@ class GradingWorker(QThread):
 
     def run(self) -> None:
         try:
-            backend: EmbeddingBackend = get_backend(
+            backend: EmbeddingBackend = get_cached_backend(
                 preference=self._embedding_preference, model_name=self._model_name,
             )
         except Exception as exc:  # noqa: BLE001

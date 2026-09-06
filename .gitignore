@@ -1,5 +1,11 @@
 __pycache__/
-*.pyc
+*.py[cod]
 *.db
-Results/
 .venv/
+venv/
+.env
+Results/
+Resulte/
+*.log
+.idea/
+.vscode/

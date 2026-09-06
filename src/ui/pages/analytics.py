@@ -62,19 +62,20 @@ class AnalyticsPage(QWidget):
     def _rebuild(self) -> None:
         if self._content is not None:
             self._outer.removeWidget(self._content)
+            self._content.hide()
             self._content.deleteLater()
             self._content = None
 
         if self._exam_id is None:
             self._content = Card()
-            self._content.body.addWidget(EmptyState("No grading history available yet", "Grade an exam to see analytics."))
+            self._content.body.addWidget(EmptyState("No grading history available yet", "Grade an exam to see analytics.", icon_name="bar-chart"))
             self._outer.addWidget(self._content)
             return
 
         detail = self.ctx.repo.get_exam_detail(self._exam_id)
         if detail is None or not detail.students:
             self._content = Card()
-            self._content.body.addWidget(EmptyState("No students graded yet", "This exam has no results to analyze."))
+            self._content.body.addWidget(EmptyState("No students graded yet", "This exam has no results to analyze.", icon_name="users"))
             self._outer.addWidget(self._content)
             return
 
@@ -120,7 +121,6 @@ class AnalyticsPage(QWidget):
         table.setHorizontalHeaderLabels(["Question", "Average %", "Times Missed (<40%)", "Difficulty Rank"])
         table.verticalHeader().setVisible(False)
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        table.horizontalHeader().setStretchLastSection(True)
         table.setAlternatingRowColors(True)
         for row, d in enumerate(analytics.question_difficulty):
             table.setItem(row, 0, QTableWidgetItem(f"Q{d.question_number}"))
@@ -129,6 +129,8 @@ class AnalyticsPage(QWidget):
             table.setItem(row, 1, pct_item)
             table.setItem(row, 2, QTableWidgetItem(str(d.times_missed)))
             table.setItem(row, 3, QTableWidgetItem(f"#{row + 1} hardest"))
+        table.resizeColumnsToContents()
+        table.horizontalHeader().setStretchLastSection(True)
         table_card.body.addWidget(table)
         layout.addWidget(table_card)
 

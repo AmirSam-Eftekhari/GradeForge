@@ -83,12 +83,14 @@ LIGHT = Palette(
 def build_stylesheet(p: Palette) -> str:
     return f"""
 QWidget {{
-    background-color: {p.bg};
     color: {p.text_primary};
     font-family: "Segoe UI", "Vazirmatn", "Inter", "Helvetica Neue", Arial, sans-serif;
     font-size: 13px;
 }}
 QMainWindow, #centralArea {{ background-color: {p.bg}; }}
+QScrollArea {{ background-color: transparent; border: none; }}
+QScrollArea > QWidget {{ background-color: transparent; }}
+QScrollArea > QWidget > QWidget {{ background-color: transparent; }}
 
 /* ---- Sidebar ---- */
 #sidebar {{
@@ -302,7 +304,9 @@ QRadioButton::indicator {{
     width: 16px; height: 16px; border-radius: 8px;
     border: 1px solid {p.border_strong}; background-color: {p.bg_elevated_2};
 }}
-QRadioButton::indicator:checked {{ background-color: {p.accent}; border: 4px solid {p.bg_elevated_2}; outline: 1px solid {p.accent}; }}
+QRadioButton::indicator:checked {{
+    background-color: {p.accent}; border: 2px solid {p.accent};
+}}
 """
 
 

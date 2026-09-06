@@ -7,12 +7,12 @@ from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QAbstractItemView, QComboBox, QFileDialog, QHBoxLayout, QListWidget, QListWidgetItem,
-    QMessageBox, QPushButton, QRadioButton, QVBoxLayout, QWidget,
+    QMessageBox, QRadioButton, QVBoxLayout, QWidget,
 )
 
 from src.services.report_service import export_class_excel, export_student_json, export_student_pdf
 from src.ui.app_context import AppContext
-from src.ui.widgets.common import Card, EmptyState, h1, h2, muted, subtitle
+from src.ui.widgets.common import Card, EmptyState, clear_layout, h1, h2, icon_button, muted, subtitle
 
 
 class ReportsPage(QWidget):
@@ -64,23 +64,20 @@ class ReportsPage(QWidget):
         self._rebuild()
 
     def _clear_body(self) -> None:
-        while self._body.count():
-            item = self._body.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+        clear_layout(self._body)
 
     def _rebuild(self) -> None:
         self._clear_body()
         if self._exam_id is None:
             card = Card()
-            card.body.addWidget(EmptyState("No exams to export", "Grade an exam first."))
+            card.body.addWidget(EmptyState("No exams to export", "Grade an exam first.", icon_name="download"))
             self._body.addWidget(card)
             return
 
         self._detail = self.ctx.repo.get_exam_detail(self._exam_id)
         if self._detail is None or not self._detail.students:
             card = Card()
-            card.body.addWidget(EmptyState("No results yet", "This exam has no graded students."))
+            card.body.addWidget(EmptyState("No results yet", "This exam has no graded students.", icon_name="users"))
             self._body.addWidget(card)
             return
 
@@ -108,21 +105,20 @@ class ReportsPage(QWidget):
         export_card.body.addWidget(h2("Export"))
         export_card.body.addWidget(muted(f"Files are written under: {self.ctx.config.paths.output_dir}"))
 
-        change_dir_btn = QPushButton("Change output folder…")
+        change_dir_btn = icon_button("Change output folder…", "folder")
         change_dir_btn.clicked.connect(self._change_output_dir)
         export_card.body.addWidget(change_dir_btn)
 
         buttons_row = QHBoxLayout()
-        pdf_btn = QPushButton("Export PDF (per student)")
-        pdf_btn.setProperty("cls", "primary")
+        pdf_btn = icon_button("Export PDF (per student)", "file-text", cls="primary")
         pdf_btn.clicked.connect(self._export_pdf)
         buttons_row.addWidget(pdf_btn)
 
-        json_btn = QPushButton("Export JSON (per student)")
+        json_btn = icon_button("Export JSON (per student)", "download")
         json_btn.clicked.connect(self._export_json)
         buttons_row.addWidget(json_btn)
 
-        excel_btn = QPushButton("Export Class Excel")
+        excel_btn = icon_button("Export Class Excel", "bar-chart")
         excel_btn.clicked.connect(self._export_excel)
         buttons_row.addWidget(excel_btn)
         export_card.body.addLayout(buttons_row)
@@ -174,6 +170,7 @@ class ReportsPage(QWidget):
         out_dir = self.ctx.config.paths.output_dir / self._safe_exam_folder()
         path = export_class_excel(self._detail, out_dir, students=students)
         self.status_label.setText(f"Saved: {path}")
+        self.ctx.toast(f"Class Excel report saved to {path.name}", "success")
         self._offer_open(path.parent)
 
     def _safe_exam_folder(self) -> str:
@@ -182,6 +179,7 @@ class ReportsPage(QWidget):
 
     def _report_success(self, out_dir: Path, count: int) -> None:
         self.status_label.setText(f"Exported {count} file(s) to: {out_dir}")
+        self.ctx.toast(f"Exported {count} file(s)", "success")
         self._offer_open(out_dir)
 
     def _offer_open(self, folder: Path) -> None:

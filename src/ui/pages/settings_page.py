@@ -6,12 +6,12 @@ from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout,
-    QLabel, QLineEdit, QPushButton, QRadioButton, QSpinBox, QTabWidget, QVBoxLayout, QWidget,
+    QLabel, QLineEdit, QRadioButton, QSpinBox, QTabWidget, QVBoxLayout, QWidget,
 )
 
 from src.config.strictness import StrictnessLevel
 from src.ui.app_context import AppContext
-from src.ui.widgets.common import Card, h1, muted, subtitle
+from src.ui.widgets.common import Card, h1, icon_button, muted, subtitle
 
 _MODEL_PRESETS = [
     "intfloat/multilingual-e5-large",
@@ -54,7 +54,7 @@ class SettingsPage(QWidget):
         form = QFormLayout()
 
         self.output_dir_input = QLineEdit(str(self.ctx.config.paths.output_dir))
-        browse_btn = QPushButton("Browse…")
+        browse_btn = icon_button("Browse…", "folder")
         browse_btn.clicked.connect(self._browse_output_dir)
         row = QHBoxLayout()
         row.addWidget(self.output_dir_input, 1)
@@ -116,17 +116,17 @@ class SettingsPage(QWidget):
         idx = self.backend_combo.findData(self.ctx.config.embedding.backend)
         if idx >= 0:
             self.backend_combo.setCurrentIndex(idx)
-        self.backend_combo.currentIndexChanged.connect(self._save)
+        self.backend_combo.currentIndexChanged.connect(self._on_ai_settings_changed)
         form.addRow("Backend", self.backend_combo)
 
         self.model_combo = QComboBox()
         self.model_combo.setEditable(True)
         self.model_combo.addItems(_MODEL_PRESETS)
         self.model_combo.setCurrentText(self.ctx.config.embedding.model_name)
-        self.model_combo.currentTextChanged.connect(self._save)
+        self.model_combo.currentTextChanged.connect(self._on_ai_settings_changed)
         form.addRow("Model", self.model_combo)
 
-        browse_model_btn = QPushButton("Use a local model folder…")
+        browse_model_btn = icon_button("Use a local model folder…", "folder")
         browse_model_btn.clicked.connect(self._browse_local_model)
         form.addRow("", browse_model_btn)
 
@@ -139,6 +139,11 @@ class SettingsPage(QWidget):
             "For fully offline use: run download_model.py once on a machine with internet, then point "
             "\"Model\" at the resulting local folder (or use the button above). A local folder is loaded "
             "with zero network access, even to check for updates."
+        ))
+        card.body.addWidget(muted(
+            "Once loaded, the model stays warm in memory for the rest of this app session — only the "
+            "first grading run after opening the app (or after changing Backend/Model here) has to wait "
+            "for it to load."
         ))
         layout.addWidget(card)
         layout.addStretch()
@@ -207,10 +212,10 @@ class SettingsPage(QWidget):
         form.addRow("Report output folder", out_label)
         card.body.addLayout(form)
 
-        open_db_btn = QPushButton("Open database folder")
+        open_db_btn = icon_button("Open database folder", "folder")
         open_db_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.ctx.db_path.parent.resolve()))))
         card.body.addWidget(open_db_btn)
-        open_out_btn = QPushButton("Open output folder")
+        open_out_btn = icon_button("Open output folder", "folder")
         open_out_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.ctx.config.paths.output_dir.resolve()))))
         card.body.addWidget(open_out_btn)
 
@@ -229,7 +234,13 @@ class SettingsPage(QWidget):
         chosen = QFileDialog.getExistingDirectory(self, "Choose a pre-downloaded model folder")
         if chosen:
             self.model_combo.setCurrentText(chosen)
-            self._save()
+            self._on_ai_settings_changed()
+
+    def _on_ai_settings_changed(self, *_args) -> None:
+        from src.services import backend_cache
+
+        backend_cache.clear_cache()  # next grading run must pick up the new backend/model, not a stale cached one
+        self._save()
 
     def _on_theme_changed(self, _checked: bool) -> None:
         self.ctx.set_theme("light" if self.light_radio.isChecked() else "dark")

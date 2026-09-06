@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from src.database.dto import REASON_LABELS, FeedbackRecord
 from src.ui.app_context import AppContext
 from src.ui.theme import palette_for, score_color
-from src.ui.widgets.common import Card, badge, h1, h2, h3, hline, muted, subtitle
+from src.ui.widgets.common import Card, badge, h1, h2, h3, hline, icon_button, muted, subtitle
 
 
 class QuestionCard(Card):
@@ -27,12 +27,12 @@ class QuestionCard(Card):
         score_lbl.setStyleSheet(f"color: {score_color(pct, palette)}; font-weight: 700; font-size: 14px;")
         header.addWidget(score_lbl)
         if record.is_adjusted:
-            header.addWidget(badge("Adjusted", "warning"))
+            header.addWidget(badge("Adjusted", "warning", with_icon=True))
         header.addStretch()
         if fb.contradictions_detected:
-            header.addWidget(badge("Contradiction", "danger"))
+            header.addWidget(badge("Contradiction", "danger", with_icon=True))
         if record.review.needs_review and record.review.review_status == "pending":
-            header.addWidget(badge("Needs review", "warning"))
+            header.addWidget(badge("Needs review", "warning", with_icon=True))
         self.body.addLayout(header)
 
         self.toggle_btn = QPushButton("Show details ▾")
@@ -93,7 +93,7 @@ class QuestionCard(Card):
 
     def _review_actions(self) -> QHBoxLayout:
         row = QHBoxLayout()
-        accept_btn = QPushButton("Accept AI Grade")
+        accept_btn = icon_button("Accept AI Grade", "check")
         accept_btn.clicked.connect(self._accept)
         row.addWidget(accept_btn)
 
@@ -107,8 +107,7 @@ class QuestionCard(Card):
         self.note_input.setPlaceholderText("Optional note")
         row.addWidget(self.note_input, 1)
 
-        adjust_btn = QPushButton("Save Adjusted Score")
-        adjust_btn.setProperty("cls", "primary")
+        adjust_btn = icon_button("Save Adjusted Score", "save", cls="primary")
         adjust_btn.clicked.connect(self._adjust)
         row.addWidget(adjust_btn)
         return row
@@ -151,6 +150,7 @@ class StudentResultPage(QWidget):
     def _rebuild(self) -> None:
         if self._content is not None:
             self._outer.removeWidget(self._content)
+            self._content.hide()
             self._content.deleteLater()
             self._content = None
 
@@ -170,10 +170,9 @@ class StudentResultPage(QWidget):
         layout = QVBoxLayout(inner)
         layout.setSpacing(14)
 
-        back_btn = QPushButton("← Back to results")
-        back_btn.setProperty("cls", "ghost")
+        back_btn = icon_button("Back to results", "arrow-left", cls="ghost")
         back_btn.clicked.connect(lambda: self.ctx.navigate("exam_detail", exam_id=self._exam_id))
-        back_btn.setFixedWidth(150)
+        back_btn.setFixedWidth(170)
         layout.addWidget(back_btn)
 
         header_card = Card()
@@ -201,8 +200,8 @@ class StudentResultPage(QWidget):
 
         badges_row = QHBoxLayout()
         identity_ok = record.identity.identity_confidence >= 0.6
-        badges_row.addWidget(badge("Identity confirmed" if identity_ok else "Identity uncertain", "success" if identity_ok else "warning"))
-        badges_row.addWidget(badge("Needs review" if record.needs_review else "Reviewed / OK", "warning" if record.needs_review else "success"))
+        badges_row.addWidget(badge("Identity confirmed" if identity_ok else "Identity uncertain", "success" if identity_ok else "warning", with_icon=True))
+        badges_row.addWidget(badge("Needs review" if record.needs_review else "Reviewed / OK", "warning" if record.needs_review else "success", with_icon=True))
         badges_row.addStretch()
         header_card.body.addLayout(badges_row)
         layout.addWidget(header_card)

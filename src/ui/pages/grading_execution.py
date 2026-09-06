@@ -3,12 +3,12 @@ from __future__ import annotations
 import time
 
 from PySide6.QtWidgets import (
-    QHBoxLayout, QListWidget, QListWidgetItem, QMessageBox, QProgressBar, QPushButton, QVBoxLayout, QWidget,
+    QHBoxLayout, QListWidget, QListWidgetItem, QMessageBox, QProgressBar, QVBoxLayout, QWidget,
 )
 
 from src.services.grading_service import GradingProgress, GradingWorker
 from src.ui.app_context import AppContext
-from src.ui.widgets.common import Card, badge, h1, h2, muted, subtitle
+from src.ui.widgets.common import Card, badge, h1, h2, icon_button, muted, subtitle
 
 
 class GradingExecutionPage(QWidget):
@@ -63,13 +63,11 @@ class GradingExecutionPage(QWidget):
         outer.addWidget(log_card, 1)
 
         actions = QHBoxLayout()
-        self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.setProperty("cls", "danger")
+        self.cancel_btn = icon_button("Cancel", "x", cls="danger")
         self.cancel_btn.clicked.connect(self._cancel)
         actions.addWidget(self.cancel_btn)
         actions.addStretch()
-        self.view_results_btn = QPushButton("View Results")
-        self.view_results_btn.setProperty("cls", "primary")
+        self.view_results_btn = icon_button("View Results", "chevron-right", cls="primary")
         self.view_results_btn.setEnabled(False)
         self.view_results_btn.clicked.connect(self._view_results)
         actions.addWidget(self.view_results_btn)

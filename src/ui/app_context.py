@@ -15,6 +15,7 @@ class AppSignals(QObject):
     navigate = Signal(str, dict)          # page_key, params
     data_changed = Signal()               # an exam/review/setting changed -- refresh lists
     theme_changed = Signal(str)
+    toast_requested = Signal(str, str)    # message, variant
 
 
 class AppContext:
@@ -41,6 +42,9 @@ class AppContext:
 
     def navigate(self, page_key: str, **params) -> None:
         self.signals.navigate.emit(page_key, params)
+
+    def toast(self, message: str, variant: str = "success") -> None:
+        self.signals.toast_requested.emit(message, variant)
 
     def shutdown(self) -> None:
         self.repo.close()
