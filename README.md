@@ -4,14 +4,12 @@
 
 ### Explainable AI grading for descriptive exams.
 
-An **offline, multilingual desktop application** that turns student answers into structured, reviewable grades — with semantic scoring, confidence analysis, local history, analytics, and professional reports.
+**GradeForge** is an offline-first, multilingual desktop application for grading descriptive and open-ended exams with semantic analysis, confidence-aware review, local history, analytics, and report generation.
 
-<br>
-
-![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
-![PySide6](https://img.shields.io/badge/UI-PySide6-41CD52?logo=qt&logoColor=white)
-![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-informational)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![PySide6](https://img.shields.io/badge/UI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
+[![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![License](https://img.shields.io/badge/License-MIT-informational)](LICENSE)
 
 </div>
 
@@ -19,33 +17,64 @@ An **offline, multilingual desktop application** that turns student answers into
 
 ## Overview
 
-**GradeForge** is a local-first grading platform for descriptive and open-ended exams.
+GradeForge is a local grading platform designed for descriptive and open-ended exam responses.
 
-Instead of treating an AI-generated score as unquestionable, GradeForge is built around a stricter idea:
+It is built around a simple principle:
 
-> **When the evidence is not strong enough, the system should ask for human review rather than manufacture confidence.**
+> **When the available evidence is not strong enough, the system should ask for human review rather than manufacture confidence.**
 
-The application reads answer keys and student papers, extracts their content through OCR/document parsing, evaluates answers using semantic and policy-based scoring, explains the result, flags uncertain cases, and stores the entire grading workflow locally.
+Instead of reducing an answer to a single similarity score, GradeForge combines multiple interpretable signals:
 
-It can be used through both a **modern PySide6 desktop application** and a **scriptable command-line interface**.
+- **Semantic similarity** — how closely the response matches the expected meaning.
+- **Concept coverage** — whether important ideas from the answer key are present.
+- **Relevance** — whether the response actually addresses the question.
+- **Omission penalties** — meaningful concepts that are missing can affect the score.
+- **Contradiction detection** — conflicting statements can reduce confidence or trigger review.
+- **Confidence** — uncertain results are surfaced instead of silently accepted.
+- **Configurable strictness** — grading behavior can be adjusted without rewriting the engine.
+
+The result is not simply a grade. It is a **reviewable grading decision** with supporting signals and an audit-friendly workflow.
+
+GradeForge can be used through both a **PySide6 desktop application** and a **command-line interface**.
 
 ---
 
 ## Why GradeForge?
 
-Traditional automated grading often reduces an answer to a single similarity score. That is not enough for serious assessment.
+Automated grading is useful only when its limitations are visible.
 
-GradeForge separates grading into interpretable signals such as:
+A semantic model can recognize that two answers are similar, but similarity alone does not guarantee that an answer is correct, complete, relevant, or free of contradictions. GradeForge therefore treats semantic similarity as one input to a broader grading policy rather than as the final authority.
 
-- **Semantic similarity** — how closely the answer matches the expected meaning.
-- **Concept coverage** — whether important ideas from the answer key are present.
-- **Relevance** — whether the response actually addresses the question.
-- **Omission penalties** — meaningful concepts that are missing are reflected in the score.
-- **Contradiction detection** — conflicting statements can lower confidence or trigger review.
-- **Confidence** — uncertain answers are surfaced instead of silently accepted.
-- **Configurable strictness** — grading behavior can be adjusted without rewriting the engine.
+This leads to a **human-in-the-loop** workflow:
 
-The result is not just *a grade*, but a grade that can be **inspected, challenged, adjusted, and reported**.
+```text
+Student Answer
+      │
+      ▼
+Text Extraction / Parsing
+      │
+      ▼
+Semantic & Content Analysis
+      │
+      ├── Similarity
+      ├── Concept Coverage
+      ├── Relevance
+      ├── Omissions
+      └── Contradictions
+      │
+      ▼
+Grading Policy
+      │
+      ├── Grade
+      ├── Confidence
+      ├── Explanation
+      └── Review Flag
+             │
+             ▼
+      Human Review when needed
+```
+
+The goal is not to pretend that AI grading is infallible. The goal is to make automated grading **useful, inspectable, and conservative when evidence is weak**.
 
 ---
 
@@ -57,7 +86,12 @@ The result is not just *a grade*, but a grade that can be **inspected, challenge
 - Transformer-based semantic embeddings
 - Automatic TF-IDF fallback when the transformer backend is unavailable
 - Configurable grading policies
-- Five strictness levels: `very_lenient`, `lenient`, `balanced`, `strict`, `very_strict`
+- Five strictness levels:
+  - `very_lenient`
+  - `lenient`
+  - `balanced`
+  - `strict`
+  - `very_strict`
 - Per-question scoring and reasoning
 - Confidence-aware grading
 - Contradiction detection
@@ -73,14 +107,14 @@ The result is not just *a grade*, but a grade that can be **inspected, challenge
 
 ### Desktop application
 
-- PySide6-based native desktop interface
+- Native PySide6 interface
 - Dashboard and exam overview
-- New Grading workflow
+- Guided New Grading workflow
 - Student and exam history
 - Review Center
 - Class analytics
-- Reports
-- Settings and persistent application state
+- Report generation
+- Persistent settings and application state
 - Background grading through Qt threads to keep the UI responsive
 
 ### Data & reporting
@@ -91,11 +125,11 @@ The result is not just *a grade*, but a grade that can be **inspected, challenge
 - PDF reports
 - Excel reports
 - JSON reports
-- Fully local data flow by default
+- Local-first data flow by default
 
-### Developer-friendly interface
+### Developer interface
 
-The same grading engine powers both the GUI and CLI, avoiding duplicated grading logic.
+The GUI and CLI use the **same underlying grading engine**:
 
 ```text
 Desktop UI ───────┐
@@ -103,11 +137,184 @@ Desktop UI ───────┐
 CLI ──────────────┘
 ```
 
+This keeps grading logic independent from presentation and avoids maintaining two separate implementations.
+
+---
+
+## Getting Started
+
+### Requirements
+
+- Python **3.10+**
+- Tesseract OCR for OCR-based workflows
+- Poppler for PDF rendering
+- Python dependencies listed in `requirements.txt`
+
+> **Note:** GradeForge is designed to run locally, but OCR system dependencies such as Tesseract and Poppler must be installed separately from the Python packages.
+
+### 1. Clone the repository
+
+```bash
+git clone <your-repository-url>
+cd GradeForge
+```
+
+Replace `<your-repository-url>` with the URL of your GitHub repository.
+
+### 2. Create a virtual environment
+
+#### Windows
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+#### Linux / macOS
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install Python dependencies
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 4. Install OCR dependencies
+
+#### Ubuntu / Debian
+
+```bash
+sudo apt-get update
+sudo apt-get install tesseract-ocr tesseract-ocr-fas tesseract-ocr-ara tesseract-ocr-chi-sim poppler-utils
+```
+
+#### Windows
+
+Install **Tesseract OCR** and **Poppler** separately, then make sure their executables are available to GradeForge.
+
+The exact installation path can vary by system.
+
+### 5. Launch GradeForge
+
+```bash
+python app.py
+```
+
+The desktop application should open with the GradeForge dashboard.
+
+---
+
+## Using the Desktop Application
+
+The typical workflow is:
+
+### 1. Prepare the answer key
+
+Provide the answer key using the format supported by the application.
+
+### 2. Add student papers
+
+Select the directory or input files containing the student responses.
+
+GradeForge can process supported text, document, PDF, and image inputs through its parsing/OCR pipeline.
+
+### 3. Configure grading
+
+Choose the grading options appropriate for the exam, including the desired **strictness level** and semantic backend.
+
+For most use cases, start with:
+
+```text
+Strictness: balanced
+Embedding backend: auto
+```
+
+### 4. Run grading
+
+Start the grading process from the New Grading workflow.
+
+GradeForge processes the papers in the background so the desktop interface remains responsive.
+
+### 5. Review uncertain answers
+
+Open the **Review Center** to inspect questions that were flagged.
+
+For each review item, you can inspect the available grading signals, accept the AI grade, adjust the score, and leave a teacher note.
+
+### 6. Inspect results
+
+Use the student results, exam history, and analytics views to inspect the completed grading run.
+
+### 7. Export reports
+
+Generate the required report format:
+
+- PDF
+- Excel
+- JSON
+
+---
+
+## CLI Usage
+
+GradeForge can also be used without the desktop interface.
+
+A basic grading run using the included sample data is:
+
+```bash
+python main.py \
+  --answer-key sample_data/answer_key.txt \
+  --students-dir sample_data/students \
+  --strictness balanced
+```
+
+For the complete command reference:
+
+```bash
+python main.py --help
+```
+
+Common options include:
+
+```text
+--strictness
+--languages
+--embedding-backend
+--no-contradiction-detection
+--exam-title
+--output-dir
+--db
+-v / --verbose
+```
+
+The CLI is useful for automation, reproducible experiments, batch processing, and development workflows.
+
+---
+
+## Semantic Backends
+
+GradeForge supports multiple semantic-analysis backends:
+
+| Backend | Purpose |
+|---|---|
+| `sentence_transformer` | Higher-quality semantic grading using transformer embeddings |
+| `tfidf` | Lightweight local fallback when transformer dependencies are unavailable |
+| `auto` | Automatically selects the preferred available backend |
+
+For higher-quality semantic grading, the transformer backend is recommended.
+
+The TF-IDF fallback allows the grading pipeline to remain usable when the transformer stack is unavailable.
+
 ---
 
 ## Architecture
 
-GradeForge is organized into focused layers rather than putting the entire application inside the UI.
+GradeForge is organized into focused layers instead of putting the entire application inside the UI.
 
 ```text
 GradeForge/
@@ -125,7 +332,7 @@ GradeForge/
 │   ├── models/               # Domain models
 │   ├── ocr/                  # OCR interfaces & Tesseract implementation
 │   ├── parser/               # Student paper & answer-key parsing
-│   ├── reports/              # PDF, Excel & JSON report generation
+│   ├── reports/              # PDF, Excel & JSON reporting
 │   ├── services/             # Application/service layer
 │   ├── ui/                   # PySide6 application
 │   └── utils/                # Shared utilities
@@ -140,128 +347,29 @@ GradeForge/
 
 ### Design principle
 
-The UI is intentionally **not** the grading engine.
+The UI is **not** the grading engine.
 
-This separation makes the core pipeline reusable from the CLI, easier to test, and easier to extend with future interfaces such as web or LMS integrations.
+The core grading pipeline is kept independent from presentation logic so it can be reused by the GUI and CLI, tested independently, and extended with future interfaces.
 
 ---
 
 ## Grading Pipeline
 
-At a high level, a grading run follows this flow:
+At a high level, a grading run follows:
 
 ```text
 Answer Key ──┐
              ├──> Parse ──> Normalize ──> Semantic Analysis ──> Policy ──> Grade
-Student Paper┘                                                   │
-                                                                 ├──> Confidence
-                                                                 ├──> Review Flag
-                                                                 └──> Explanation
+Student Paper┘                                                        │
+                                                                      ├──> Confidence
+                                                                      ├──> Review Flag
+                                                                      └──> Explanation
 
 Grade ──> SQLite History
       └─> PDF / Excel / JSON Reports
 ```
 
-The system is designed so that low-confidence results can be reviewed instead of being treated as automatically correct.
-
----
-
-## Getting Started
-
-### 1. Clone the repository
-
-```bash
-git clone <your-repository-url>
-cd GradeForge
-```
-
-### 2. Create a virtual environment
-
-**Windows:**
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-```
-
-**Linux / macOS:**
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 3. Install Python dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Install OCR system dependencies
-
-GradeForge uses Tesseract for OCR and Poppler for PDF rendering.
-
-On Ubuntu/Debian:
-
-```bash
-sudo apt-get install tesseract-ocr tesseract-ocr-fas tesseract-ocr-ara tesseract-ocr-chi-sim poppler-utils
-```
-
-On Windows, install **Tesseract OCR** and **Poppler** separately and make sure their executables are available to the application.
-
-### 5. Launch the desktop application
-
-```bash
-python app.py
-```
-
----
-
-## CLI Usage
-
-GradeForge can also run without the desktop interface.
-
-```bash
-python main.py \
-  --answer-key sample_data/answer_key.txt \
-  --students-dir sample_data/students \
-  --strictness balanced
-```
-
-Useful options include:
-
-```text
---strictness
---languages
---embedding-backend
---no-contradiction-detection
---exam-title
---output-dir
---db
--v / --verbose
-```
-
-For the complete command reference:
-
-```bash
-python main.py --help
-```
-
----
-
-## Semantic Backend
-
-GradeForge supports two grading backends:
-
-| Backend | Purpose |
-|---|---|
-| `sentence_transformer` | Higher-quality semantic grading using transformer embeddings |
-| `tfidf` | Lightweight local fallback when transformer dependencies are unavailable |
-| `auto` | Selects the preferred backend automatically |
-
-For production-quality semantic grading, the transformer stack is recommended.
-
-The project is designed to remain usable when that stack is unavailable rather than failing the entire grading pipeline.
+This separation makes the grading process easier to inspect and evolve.
 
 ---
 
@@ -269,48 +377,60 @@ The project is designed to remain usable when that stack is unavailable rather t
 
 GradeForge is designed as an **offline-first application**.
 
-Student documents, grading history, configuration, and generated reports can remain on the local machine. There is no requirement for a cloud grading service in the core architecture.
+Student documents, grading history, configuration, and generated reports can remain on the local machine. The core architecture does not require a cloud grading service.
 
-This makes the project particularly suitable for environments where student data should not be uploaded to external services by default.
+This is useful for environments where student data should not be uploaded to external services by default.
 
----
-
-## Current Status
-
-GradeForge currently includes:
-
-- A functional PySide6 desktop application
-- A reusable grading engine
-- Multilingual OCR/document parsing
-- Semantic grading with fallback behavior
-- Review workflows
-- SQLite persistence
-- Analytics
-- PDF, Excel, and JSON reporting
-- CLI execution
-- Automated tests for core grading policy behavior
-
-The project is **functional and usable, but still evolving**.
-
----
-
-## Documentation
-
-Project documentation will live under [`docs/`](docs/).
-
-The **project proposal will be added there as a PDF once it is finalized.**
+> **Offline-first does not mean that every dependency is bundled with the repository.** OCR engines and other system-level dependencies still need to be installed locally.
 
 ---
 
 ## Testing
 
-Run the current test suite with:
+Run the test suite with:
 
 ```bash
 pytest
 ```
 
-The test suite is currently focused on the core grading policy layer and will expand as the project matures.
+The current automated tests focus primarily on the core grading-policy behavior. Integration coverage for OCR, parsing, reporting, and the complete desktop workflow can be expanded as the project evolves.
+
+---
+
+## Project Status
+
+GradeForge currently includes:
+
+- Functional PySide6 desktop application
+- Reusable grading engine
+- Multilingual OCR/document parsing
+- Semantic grading with fallback behavior
+- Confidence-aware review workflows
+- SQLite persistence
+- Exam and student history
+- Class analytics
+- PDF, Excel, and JSON reporting
+- CLI execution
+- Automated tests for core grading behavior
+
+### Planned improvements
+
+- Handwriting-specialized OCR
+- Teacher-defined rubrics and richer concept extraction
+- Broader OCR/parser/report integration tests
+- Continuous integration and coverage reporting
+- Application packaging and distribution
+- Future LMS/cloud integrations as separate extensions
+
+The current release should be considered **functional and usable, but still evolving**.
+
+---
+
+## Documentation
+
+Project documentation lives under [`docs/`](docs/).
+
+The **project proposal will be added there as a PDF once it is finalized**.
 
 ---
 
@@ -318,21 +438,24 @@ The test suite is currently focused on the core grading policy layer and will ex
 
 GradeForge is currently a personal development project, but the codebase is structured with future extension in mind.
 
-If you want to experiment with the project, the best places to start are:
+If you want to explore the implementation, useful starting points are:
 
-- `src/grading/` for grading behavior
-- `src/services/` for application workflows
-- `src/parser/` for document handling
-- `src/ui/` for the desktop interface
-- `tests/` for regression coverage
+- `src/grading/` — grading behavior and policies
+- `src/services/` — application workflows
+- `src/parser/` — document and answer parsing
+- `src/ocr/` — OCR integration
+- `src/ui/` — desktop interface
+- `tests/` — regression coverage
 
-Keep grading logic independent from presentation logic whenever possible.
+When extending the project, keep grading logic independent from presentation logic whenever possible.
 
 ---
 
 ## License
 
-GradeForge is released under the **MIT License**. See [`LICENSE`](LICENSE) for details.
+GradeForge is released under the **MIT License**.
+
+See [`LICENSE`](LICENSE) for details.
 
 ---
 
