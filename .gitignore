@@ -1,5 +1,46 @@
+# Python
 __pycache__/
-*.pyc
-*.db
-Results/
+*.py[cod]
+*.pyo
+
+# Virtual environments
 .venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Runtime / generated output
+Results/
+*.log
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checking / lint caches
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
